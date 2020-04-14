@@ -133,7 +133,7 @@ class DiscordClient(discord.Client):
 
         elif user_input == '/help':
             print('help')
-            reply = '/help - show help\n/readdb - read all db\n\nstart the command with /v\n\n1b = 1 x bundle\n1t = 1 x ticket\n1p = 1 x popcorn\n1d = 1 x drink\n\nExample\n/v 2t 1p 2d'
+            reply = '/help - show help\n\nstart the process with /v\n\n1b = 1 x bundle\n1t = 1 x ticket\n1p = 1 x popcorn\n1d = 1 x drink\n\nExample\n/v 2t 1p 2d'
             return await message.channel.send(reply)
 
 
