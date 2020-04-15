@@ -1,4 +1,4 @@
-## Discord Cinema Voucher Database
+## Discord Voucher Database
 
 Stores and supplies stored cinema vouchers over Discord.
 
