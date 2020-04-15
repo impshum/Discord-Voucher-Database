@@ -2,7 +2,7 @@ import discord
 import asyncio
 import sqlite3
 from sqlite3 import Error
-from datetime import datetime
+import datetime
 import configparser
 
 config = configparser.ConfigParser()
@@ -55,8 +55,8 @@ def search_db(conn, type, amount):
                     row = cur.fetchone()
                     if row:
                         results.append({row[1]: row[2]})
-                        cur.execute("UPDATE vouchers SET date='{}' WHERE ID={}".format(
-                            datetime.now(), row[0]))
+                        now = datetime.datetime.now().strftime('%c')
+                        cur.execute("UPDATE vouchers SET date='{}' WHERE ID={}".format(now, row[0]))
                         conn.commit()
     else:
         cur.execute(
@@ -64,19 +64,53 @@ def search_db(conn, type, amount):
         rows = cur.fetchall()
         for row in rows:
             results.append({row[1]: row[2]})
-            cur.execute("UPDATE vouchers SET date='{}' WHERE ID={}".format(
-                datetime.now(), row[0]))
+            now = datetime.datetime.now().strftime('%c')
+            cur.execute("UPDATE vouchers SET date='{}' WHERE ID={}".format(now, row[0]))
             conn.commit()
     cur.close()
     return results
 
 
-def read_db(conn):
+def read_db(conn, mode, limit=False):
     cur = conn.cursor()
-    cur.execute("SELECT * FROM vouchers")
-    rows = cur.fetchall()
-    for row in rows:
-        print(row)
+    if mode == 'stats':
+        used = ''
+        unused = ''
+        bundles = 0
+        things = {'ticket': 0, 'popcorn': 0, 'drink': 0}
+
+        for type in types:
+            cur.execute(
+                "SELECT COUNT(*) FROM vouchers WHERE type='{}' AND date IS NOT NULL".format(type))
+            rows = cur.fetchall()
+            for row in rows:
+                count = row[0]
+                used += f'Used {type}: {count}\n'
+
+        for type in types:
+            cur.execute(
+                "SELECT COUNT(*) FROM vouchers WHERE type='{}' AND date IS NULL".format(type))
+            rows = cur.fetchall()
+            for row in rows:
+                count = row[0]
+                unused += f'Unused {type}: {count}\n'
+                things[type] = count
+
+        value = 2
+        while value > 1:
+            bundles += 1
+            for thing, value in things.items():
+                things[thing] -= 1
+
+        result = f'{used.strip()}\n\n{unused.strip()}\n\nUnused bundles: {bundles}'
+    else:
+        cur.execute(
+            "SELECT * FROM vouchers ORDER BY ID DESC LIMIT {}".format(limit))
+        rows = cur.fetchall()
+        result = ''
+        for row in rows:
+            result += f'{row[1]} - {row[2]} - {row[3]}\n'
+    return result
 
 
 def populate_db(conn):
@@ -90,7 +124,7 @@ def populate_db(conn):
 class DiscordClient(discord.Client):
     async def on_ready(self):
         print(f'Logged in as {self.user.name}')
-        print(self.user.id)
+        #print(self.user.id)
         print('------')
 
     async def on_message(self, message):
@@ -99,7 +133,7 @@ class DiscordClient(discord.Client):
 
         user_input = message.content
 
-        if user_input.startswith('/v') and user_input != '/v':
+        if user_input.startswith('/v'):
             populate_db(conn)
             order = {}
 
@@ -120,7 +154,6 @@ class DiscordClient(discord.Client):
                     order['drink'] = amount
 
             reply = ''
-            print(order)
             for item, amount in order.items():
                 results = search_db(conn, item, int(amount))
                 for result in results:
@@ -133,11 +166,25 @@ class DiscordClient(discord.Client):
 
         elif user_input == '/help':
             print('help')
-            reply = '/help - show help\n\nstart the process with /v\n\n1b = 1 x bundle\n1t = 1 x ticket\n1p = 1 x popcorn\n1d = 1 x drink\n\nExample\n/v 2t 1p 2d'
+            reply = '/help - show help\n\n/stats - Show used/unused count\n/readall - read all in database add a number to limit results\n\nstart the process with /v\n\n1b = 1 x bundle\n1t = 1 x ticket\n1p = 1 x popcorn\n1d = 1 x drink\n\nExamples\n/v 2t 1p 2d\n/readall3'
+            return await message.channel.send(reply)
+
+        elif user_input == '/stats':
+            reply = read_db(conn, 'stats')
+            return await message.channel.send(reply)
+
+        elif user_input.startswith('/readall'):
+            print('readall')
+            amount = user_input.replace('/readall', '')
+            limit = 50
+            if amount:
+                limit = int(amount)
+            reply = read_db(conn, 'all', limit)
             return await message.channel.send(reply)
 
 
 def main():
+    populate_db(conn)
     client = DiscordClient()
     client.run(discord_token)
 
