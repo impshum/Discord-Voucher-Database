@@ -76,8 +76,8 @@ def read_db(conn, mode, limit=False):
     if mode == 'stats':
         used = ''
         unused = ''
-        bundles = 0
-        things = {'ticket': 0, 'popcorn': 0, 'drink': 0}
+        #bundles = 0
+        #things = {'ticket': 0, 'popcorn': 0, 'drink': 0}
 
         for type in types:
             cur.execute(
@@ -94,15 +94,15 @@ def read_db(conn, mode, limit=False):
             for row in rows:
                 count = row[0]
                 unused += f'Unused {type}: {count}\n'
-                things[type] = count
+                #things[type] = count
 
-        value = 2
-        while value > 1:
-            bundles += 1
-            for thing, value in things.items():
-                things[thing] -= 1
+        #value = 2
+        #while value > 1:
+        #    bundles += 1
+        #    for thing, value in things.items():
+        #        things[thing] -= 1
 
-        result = f'{used.strip()}\n\n{unused.strip()}\n\nUnused bundles: {bundles}'
+        result = f'{used.strip()}\n\n{unused.strip()}'
     else:
         cur.execute(
             "SELECT * FROM vouchers ORDER BY ID DESC LIMIT {}".format(limit))
@@ -166,7 +166,7 @@ class DiscordClient(discord.Client):
 
         elif user_input == '/help':
             print('help')
-            reply = '/help - Show help\n\n/stats - Show used/unused count\n/readall - Read all in database add a number to limit results\n\nStart the process with /v\n\n1b = 1 x bundle\n1t = 1 x ticket\n1p = 1 x popcorn\n1d = 1 x drink\n\nExamples\n/v 2t 1p 2d\n/readall3'
+            reply = '/help - show help\n\n/stats - Show used/unused count\n/readall - read all in database add a number to limit results\n\nstart the process with /v\n\n1b = 1 x bundle\n1t = 1 x ticket\n1p = 1 x popcorn\n1d = 1 x drink\n\nExamples\n/v 2t 1p 2d\n/readall3'
             return await message.channel.send(reply)
 
         elif user_input == '/stats':
