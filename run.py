@@ -56,7 +56,8 @@ def search_db(conn, type, amount):
                     if row:
                         results.append({row[1]: row[2]})
                         now = datetime.datetime.now().strftime('%c')
-                        cur.execute("UPDATE vouchers SET date='{}' WHERE ID={}".format(now, row[0]))
+                        cur.execute(
+                            "UPDATE vouchers SET date='{}' WHERE ID={}".format(now, row[0]))
                         conn.commit()
     else:
         cur.execute(
@@ -65,10 +66,21 @@ def search_db(conn, type, amount):
         for row in rows:
             results.append({row[1]: row[2]})
             now = datetime.datetime.now().strftime('%c')
-            cur.execute("UPDATE vouchers SET date='{}' WHERE ID={}".format(now, row[0]))
+            cur.execute(
+                "UPDATE vouchers SET date='{}' WHERE ID={}".format(now, row[0]))
             conn.commit()
     cur.close()
     return results
+
+
+def count_sets(t, p, d):
+    sets = 0
+    while t > 0 and p > 0 and d > 0:
+        t -= 1
+        p -= 1
+        d -= 1
+        sets += 1
+    return sets
 
 
 def read_db(conn, mode, limit=False):
@@ -76,7 +88,6 @@ def read_db(conn, mode, limit=False):
     if mode == 'stats':
         used = ''
         unused = ''
-        #bundles = 0
         #things = {'ticket': 0, 'popcorn': 0, 'drink': 0}
 
         for type in types:
@@ -94,15 +105,11 @@ def read_db(conn, mode, limit=False):
             for row in rows:
                 count = row[0]
                 unused += f'Unused {type}: {count}\n'
-                #things[type] = count
 
-        #value = 2
-        #while value > 1:
-        #    bundles += 1
-        #    for thing, value in things.items():
-        #        things[thing] -= 1
+        bundle_count count_sets(ticket, popcorn, drink)
+        bundles = f'Bundles: {bundle_count}'
 
-        result = f'{used.strip()}\n\n{unused.strip()}'
+        result = f'{used.strip()}\n\n{unused.strip()}\n\n{bundles}'
     else:
         cur.execute(
             "SELECT * FROM vouchers ORDER BY ID DESC LIMIT {}".format(limit))
@@ -124,7 +131,7 @@ def populate_db(conn):
 class DiscordClient(discord.Client):
     async def on_ready(self):
         print(f'Logged in as {self.user.name}')
-        #print(self.user.id)
+        # print(self.user.id)
         print('------')
 
     async def on_message(self, message):
