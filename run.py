@@ -106,7 +106,7 @@ def read_db(conn, mode, limit=False):
                 count = row[0]
                 unused += f'Unused {type}: {count}\n'
 
-        bundle_count count_sets(ticket, popcorn, drink)
+        bundle_count = count_sets(ticket, popcorn, drink)
         bundles = f'Bundles: {bundle_count}'
 
         result = f'{used.strip()}\n\n{unused.strip()}\n\n{bundles}'
